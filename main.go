@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/gopxl/beep"
 	"github.com/gopxl/beep/mp3"
 	"github.com/gopxl/beep/speaker"
-	"log"
-	"os"
-	"time"
 )
 
 /*
@@ -26,14 +29,51 @@ func FileNames() []string {
 		log.Fatal(err)
 	}
 
+	//valid audio extensions
+	audioExts := map[string]bool{
+		".mp3":  true,
+		".wav":  true,
+		".ogg":  true,
+		".flac": true,
+	}
+
 	var fileNames []string
 
 	for _, file := range files {
-		if !file.IsDir() {
+		if file.IsDir() {
+			continue
+		}
+		//if is audio file
+		ext := strings.ToLower(filepath.Ext(file.Name()))
+		if audioExts[ext] {
 			fileNames = append(fileNames, file.Name())
+		} else {
+			log.Printf("file %s skipped - not an audio file", file.Name())
 		}
 	}
 	return fileNames
+}
+
+func PlaySound(path string) {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	streamer, _, err := mp3.Decode(file)
+	if err != nil {
+		log.Fatal(err)
+		file.Close()
+		return
+	}
+
+	var s beep.Streamer = streamer
+
+	speaker.Play(beep.Seq(s, beep.Callback(func() {
+		streamer.Close()
+		file.Close()
+	})))
+
 }
 
 func main() {
@@ -45,24 +85,12 @@ func main() {
 		fmt.Printf("%d - %s\n", i+1, s)
 	}
 
-	file, err := os.Open("sfx/" + sfx[0])
-	if err != nil {
-		log.Fatal(err)
-	}
+	//play speed
+	const sampleRate = beep.SampleRate(44100)
 
-	streamer, format, err := mp3.Decode(file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer streamer.Close()
+	speaker.Init(sampleRate*2, sampleRate.N(time.Second/10))
 
-	sr := format.SampleRate * 1 //audio speed
-	speaker.Init(sr, sr.N(time.Second/10))
-
-	done := make(chan bool)
-	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
-		done <- true
-	})))
-
-	<-done
+	PlaySound("sfx/" + sfx[2])
+	PlaySound("sfx/" + sfx[3])
+	select {}
 }
