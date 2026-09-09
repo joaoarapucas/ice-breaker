@@ -2,29 +2,42 @@ package main
 
 import (
 	"fmt"
+	"github.com/BurntSushi/toml"
+	"github.com/gopxl/beep"
+	"github.com/gopxl/beep/mp3"
+	"github.com/gopxl/beep/speaker"
 	"log"
 	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/gopxl/beep"
-	"github.com/gopxl/beep/mp3"
-	"github.com/gopxl/beep/speaker"
 )
 
-// ----- CONFIG ----- //
-const (
-	playSpeed    = beep.SampleRate(44100) * 1
-	audioFolder  = "./sfx/"
-	randomChance = /* 1 in */ 60
-	tickSpeed    = time.Second * 1
-)
+// ----- DEFAULT CONFIG ----- //
+var playSpeed = beep.SampleRate(44100) * 1
+var audioFolder = "./sfx/"
+var randomChance = /* 1 in */ 60
+var tickSpeed = time.Second * 1
+
+type Config struct {
+	AudioFolder  string `toml:"audio_folder"`
+	RandomChance int    `toml:"random_chance"`
+	TickSpeed    int    `toml:"tick_speed"`
+	PlaySpeed    int    `toml:"play_speed"`
+}
+
+func LoadConfig() Config {
+	var cfg Config
+	if _, err := toml.DecodeFile("./config.toml", &cfg); err != nil {
+		log.Fatalf("error when loading config: %v", err)
+	}
+	return cfg
+}
 
 // gets all sound effects file names
 func FileNames() []string {
-	files, err := os.ReadDir("sfx")
+	files, err := os.ReadDir(audioFolder)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,6 +89,12 @@ func PlaySound(path string) {
 
 func main() {
 	fmt.Println("hello world!")
+
+	cfg := LoadConfig()
+	playSpeed = beep.SampleRate(cfg.PlaySpeed)
+	audioFolder = cfg.AudioFolder
+	randomChance = cfg.RandomChance
+	tickSpeed = time.Second * time.Duration(cfg.TickSpeed)
 
 	sounds := FileNames()
 	fmt.Println("----- sounds list -----")

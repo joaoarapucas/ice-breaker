@@ -1,0 +1,15 @@
+# which folder to scan the audio files
+# default = "./sfx/"
+audio_folder = "./sfx/"
+
+# how often each sound will play (1 in X times)
+# default = 600
+random_chance = 600
+
+# how many seconds between each random check (in seconds)
+# default = 1
+tick_speed = 1
+
+# how fast the audio will play
+# default = 44100
+play_speed = 44100

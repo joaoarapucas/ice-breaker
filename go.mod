@@ -2,7 +2,10 @@ module ice-breaker
 
 go 1.26.4
 
-require github.com/gopxl/beep v1.4.1
+require (
+	github.com/BurntSushi/toml v1.6.0
+	github.com/gopxl/beep v1.4.1
+)
 
 require (
 	github.com/ebitengine/oto/v3 v3.1.0 // indirect
