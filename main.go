@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,14 +14,13 @@ import (
 	"github.com/gopxl/beep/speaker"
 )
 
-/*
-TODO - JSON
-blacklist
-whitelist
-sounds folder
-if key pressed plays sound
-global random time ratio
-*/
+// ----- CONFIG ----- //
+const (
+	playSpeed    = beep.SampleRate(44100) * 1
+	audioFolder  = "./sfx/"
+	randomChance = /* 1 in */ 60
+	tickSpeed    = time.Second * 1
+)
 
 // gets all sound effects file names
 func FileNames() []string {
@@ -67,9 +67,7 @@ func PlaySound(path string) {
 		return
 	}
 
-	var s beep.Streamer = streamer
-
-	speaker.Play(beep.Seq(s, beep.Callback(func() {
+	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
 		streamer.Close()
 		file.Close()
 	})))
@@ -79,18 +77,36 @@ func PlaySound(path string) {
 func main() {
 	fmt.Println("hello world!")
 
-	sfx := FileNames()
+	sounds := FileNames()
 	fmt.Println("----- sounds list -----")
-	for i, s := range sfx {
+	for i, s := range sounds {
 		fmt.Printf("%d - %s\n", i+1, s)
 	}
+	fmt.Println("-----------------------")
 
-	//play speed
-	const sampleRate = beep.SampleRate(44100)
+	if len(sounds) == 0 {
+		fmt.Printf("no sound found...")
+	}
 
-	speaker.Init(sampleRate*2, sampleRate.N(time.Second/10))
+	speaker.Init(playSpeed, playSpeed.N(time.Second/10))
 
-	PlaySound("sfx/" + sfx[2])
-	PlaySound("sfx/" + sfx[3])
-	select {}
+	timer := time.NewTicker(tickSpeed) //trigger every tick
+	defer timer.Stop()
+
+	i := 1
+
+	//core loop
+	for range timer.C {
+		fmt.Print("tick ", i)
+		i++
+		for _, s := range sounds {
+			if rand.IntN(randomChance) == 0 {
+				go func() {
+					PlaySound(audioFolder + s)
+				}()
+				fmt.Print(" - played " + s)
+			}
+		}
+		fmt.Print("\n")
+	}
 }
