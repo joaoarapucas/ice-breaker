@@ -2,9 +2,9 @@
 silence interrupted by random sounds
 
 # TODO
-- JSON
-- - blacklist
-- - whitelist
-- - sounds folder
-- - if key pressed plays sound (also should have a random sound key)
-- - global random time ratio
+## Config File
+- [X] sounds folder
+- [X] global random time ratio
+- [ ] if key pressed plays sound (also should have a random sound key)
+- [ ] blacklist
+- [ ] whitelist
