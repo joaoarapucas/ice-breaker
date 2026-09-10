@@ -19,12 +19,16 @@ var playSpeed = beep.SampleRate(44100) * 1
 var audioFolder = "./sfx/"
 var randomChance = /* 1 in */ 60
 var tickSpeed = time.Second * 1
+var alarmHour = 17
+var alarmMinute = 0
 
 type Config struct {
 	AudioFolder  string `toml:"audio_folder"`
 	RandomChance int    `toml:"random_chance"`
 	TickSpeed    int    `toml:"tick_speed"`
 	PlaySpeed    int    `toml:"play_speed"`
+	AlarmHour    int    `toml:"alarm_hour"`
+	AlarmMinute  int    `toml:"alarm_minute"`
 }
 
 func LoadConfig() Config {
@@ -87,6 +91,19 @@ func PlaySound(path string) {
 
 }
 
+func ScheduledAlarm(hour int, minute int, dir string, file string) {
+	timer := time.NewTicker(time.Second) //trigger every second
+	defer timer.Stop()
+
+	for range timer.C {
+		if time.Now().Hour() == hour && time.Now().Minute() == minute {
+			fmt.Println("bateu !!!")
+			PlaySound(dir + file)
+			return
+		}
+	}
+}
+
 func main() {
 	fmt.Println("hello world!")
 
@@ -95,23 +112,27 @@ func main() {
 	audioFolder = cfg.AudioFolder
 	randomChance = cfg.RandomChance
 	tickSpeed = time.Second * time.Duration(cfg.TickSpeed)
+	alarmHour = cfg.AlarmHour
+	alarmMinute = cfg.AlarmMinute
 
 	sounds := FileNames()
 	fmt.Println("----- sounds list -----")
 	for i, s := range sounds {
 		fmt.Printf("%d - %s\n", i+1, s)
 	}
-	fmt.Println("-----------------------")
-
 	if len(sounds) == 0 {
 		fmt.Printf("no sound found...")
 	}
+	fmt.Println("-----------------------")
 
 	speaker.Init(playSpeed, playSpeed.N(time.Second/10))
 
+	if !(alarmHour < 0 || alarmMinute < 0) {
+		go ScheduledAlarm(alarmHour, alarmMinute, audioFolder, "telephone_ring.mp3")
+	}
+
 	timer := time.NewTicker(tickSpeed) //trigger every tick
 	defer timer.Stop()
-
 	i := 1
 
 	//core loop
