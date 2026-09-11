@@ -21,6 +21,7 @@ var randomChance = /* 1 in */ 60
 var tickSpeed = time.Second * 1
 var alarmHour = 17
 var alarmMinute = 0
+var alarmSound string
 
 type Config struct {
 	AudioFolder  string `toml:"audio_folder"`
@@ -29,6 +30,7 @@ type Config struct {
 	PlaySpeed    int    `toml:"play_speed"`
 	AlarmHour    int    `toml:"alarm_hour"`
 	AlarmMinute  int    `toml:"alarm_minute"`
+	AlarmSound   string `toml:"alarm_sound"`
 }
 
 func LoadConfig() Config {
@@ -114,6 +116,7 @@ func main() {
 	tickSpeed = time.Second * time.Duration(cfg.TickSpeed)
 	alarmHour = cfg.AlarmHour
 	alarmMinute = cfg.AlarmMinute
+	alarmSound = cfg.AlarmSound
 
 	sounds := FileNames()
 	fmt.Println("----- sounds list -----")
@@ -128,7 +131,7 @@ func main() {
 	speaker.Init(playSpeed, playSpeed.N(time.Second/10))
 
 	if !(alarmHour < 0 || alarmMinute < 0) {
-		go ScheduledAlarm(alarmHour, alarmMinute, audioFolder, "telephone_ring.mp3")
+		go ScheduledAlarm(alarmHour, alarmMinute, audioFolder, alarmSound)
 	}
 
 	timer := time.NewTicker(tickSpeed) //trigger every tick
