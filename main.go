@@ -19,18 +19,26 @@ var playSpeed = beep.SampleRate(44100) * 1
 var audioFolder = "./sfx/"
 var randomChance = /* 1 in */ 60
 var tickSpeed = time.Second * 1
+
 var alarmHour = 17
 var alarmMinute = 0
 var alarmSound string
+
+var blacklist []string
+var whitelist []string
 
 type Config struct {
 	AudioFolder  string `toml:"audio_folder"`
 	RandomChance int    `toml:"random_chance"`
 	TickSpeed    int    `toml:"tick_speed"`
 	PlaySpeed    int    `toml:"play_speed"`
-	AlarmHour    int    `toml:"alarm_hour"`
-	AlarmMinute  int    `toml:"alarm_minute"`
-	AlarmSound   string `toml:"alarm_sound"`
+
+	AlarmHour   int    `toml:"alarm_hour"`
+	AlarmMinute int    `toml:"alarm_minute"`
+	AlarmSound  string `toml:"alarm_sound"`
+
+	Blacklist []string `toml:"blacklist"`
+	Whitelist []string `toml:"whitelist"`
 }
 
 func LoadConfig() Config {
@@ -73,6 +81,60 @@ func FileNames() []string {
 	return fileNames
 }
 
+func CleanTrackList(trackList *[]string, blacklist []string, whitelist []string) {
+	/*
+		blacklisted sounds will not be played
+		whitelisted sounds will be the only ones to be played
+	*/
+
+	if trackList == nil || len(*trackList) == 0 {
+		return
+	}
+
+	// has whitelist
+	if len(whitelist) > 0 {
+		// creates whitelist hash map
+		whiteMap := make(map[string]bool, len(whitelist))
+		for _, item := range whitelist {
+			whiteMap[item] = true
+		}
+
+		n := 0
+		//if track is whitelisted, add to trackList
+		for _, track := range *trackList {
+			if whiteMap[track] {
+				(*trackList)[n] = track
+				n++
+			}
+		}
+		//resizes trackList to new whitelist size
+		*trackList = (*trackList)[:n]
+
+		//return
+		// ^ uncomment to exclusive blacklist/whitelist mode
+	}
+
+	// has blacklist
+	if len(blacklist) > 0 {
+		// creates blacklist hash map
+		blackMap := make(map[string]bool, len(blacklist))
+		for _, item := range blacklist {
+			blackMap[item] = true
+		}
+
+		n := 0
+		//if track is not blacklisted, add to trackList
+		for _, track := range *trackList {
+			if !blackMap[track] {
+				(*trackList)[n] = track
+				n++
+			}
+		}
+		//resizes trackList to new blacklist size
+		*trackList = (*trackList)[:n]
+	}
+}
+
 func PlaySound(path string) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -109,21 +171,30 @@ func ScheduledAlarm(hour int, minute int, dir string, file string) {
 func main() {
 	fmt.Println("hello world!")
 
+	/*-------------------- CONFIG ----------------------------*/
 	cfg := LoadConfig()
+
 	playSpeed = beep.SampleRate(cfg.PlaySpeed)
 	audioFolder = cfg.AudioFolder
 	randomChance = cfg.RandomChance
 	tickSpeed = time.Second * time.Duration(cfg.TickSpeed)
+
 	alarmHour = cfg.AlarmHour
 	alarmMinute = cfg.AlarmMinute
 	alarmSound = cfg.AlarmSound
 
-	sounds := FileNames()
+	blacklist = cfg.Blacklist
+	whitelist = cfg.Whitelist
+	/*--------------------------------------------------------*/
+
+	trackList := FileNames()
+	CleanTrackList(&trackList, blacklist, whitelist)
+
 	fmt.Println("----- sounds list -----")
-	for i, s := range sounds {
+	for i, s := range trackList {
 		fmt.Printf("%d - %s\n", i+1, s)
 	}
-	if len(sounds) == 0 {
+	if len(trackList) == 0 {
 		fmt.Printf("no sound found...")
 	}
 	fmt.Println("-----------------------")
@@ -142,7 +213,7 @@ func main() {
 	for range timer.C {
 		fmt.Print("tick ", i)
 		i++
-		for _, s := range sounds {
+		for _, s := range trackList {
 			if rand.IntN(randomChance) == 0 {
 				go func() {
 					PlaySound(audioFolder + s)

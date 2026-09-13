@@ -17,4 +17,7 @@ play_speed = 44100
 # when the alarm will play (leave -1 if not wanted)
 alarm_hour = 15
 alarm_minute = 39
-alarm_sound = "chinese_gong.mp3"
+alarm_sound = "alarm.mp3"
+
+blacklist = []
+whitelist = []
