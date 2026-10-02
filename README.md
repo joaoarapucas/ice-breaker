@@ -1,10 +1,3 @@
 # ice-breaker
-silence interrupted by random sounds
+play some sounds to break the ice! 
 
-# TODO
-## Config File
-- [X] sounds folder
-- [X] global random time ratio
-- [X] blacklist
-- [X] whitelist
-- [ ] if key pressed plays sound (also should have a random sound key)
